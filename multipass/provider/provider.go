@@ -70,6 +70,10 @@ func (p *Provider) Launch(image, name string, args ...string) ([]byte, error) {
 	return p.client.Launch(image, name, args...)
 }
 
+func (p *Provider) Mount(instance, local, mount string) ([]byte, error) {
+	return p.client.Mount(instance, local, mount)
+}
+
 func (p *Provider) List() ([]byte, error) {
 	return p.client.List()
 }

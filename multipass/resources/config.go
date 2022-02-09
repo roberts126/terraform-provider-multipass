@@ -9,15 +9,15 @@ import (
 )
 
 func ConfigType() *schema.Resource {
-	a := &Config{}
+	c := &Config{}
 
 	return &schema.Resource{
-		CreateContext: a.Create,
-		DeleteContext: a.Delete,
-		ReadContext:   a.Read,
-		UpdateContext: a.Update,
+		CreateContext: c.Create,
+		DeleteContext: c.Delete,
+		ReadContext:   c.Read,
+		UpdateContext: c.Update,
 		Importer: &schema.ResourceImporter{
-			StateContext: a.ImportState,
+			StateContext: c.ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"flag": {

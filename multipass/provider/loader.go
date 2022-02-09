@@ -128,7 +128,41 @@ func LoadImage(_ context.Context, d *schema.ResourceData, m interface{}) diag.Di
 }
 
 func LoadInstance(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return nil
+	var diags diag.Diagnostics
+
+	p := m.(*Provider)
+	name := d.Get("name").(string)
+
+	b, err := p.Info(name)
+	if err != nil {
+		return AddError(diags, "error getting instance", err)
+	}
+
+	instances, err := models.NewInstanceDetailsFromOutput(b)
+	if err != nil {
+		return AddError(diags, "error parsing instance", err)
+	}
+
+	i := 0
+	list := make([]models.Instance, len(instances.List))
+	for n, instance := range instances.List {
+		list[i] = instance
+		list[i].Name = n
+
+		i++
+	}
+
+	if err = d.Set("instances", list); err != nil {
+		return AddError(diags, "error setting instance list", err)
+	}
+
+	if name == "" {
+		d.SetId("AllInstances")
+	} else {
+		d.SetId(name)
+	}
+
+	return diags
 }
 
 func LoadNetwork(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

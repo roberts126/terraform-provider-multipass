@@ -68,6 +68,11 @@ func (c *Client) Launch(image, name string, args ...string) ([]byte, error) {
 	return c.runner.Run(args...)
 }
 
+// Mount executes the multipass mount command
+func (c *Client) Mount(instance, local, mount string) ([]byte, error) {
+	return c.runner.Run("mount", local, fmt.Sprintf("%s:%s", instance, mount))
+}
+
 // List executes the multipass list command with json output
 func (c *Client) List() ([]byte, error) {
 	return c.runner.Run("list", argFmt, argJson)
