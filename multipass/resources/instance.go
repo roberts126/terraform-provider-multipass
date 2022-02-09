@@ -22,59 +22,52 @@ func InstanceType() *schema.Resource {
 			StateContext: i.ImportState,
 		},
 		Schema: map[string]*schema.Schema{
+			"bridged": {
+				Optional: true,
+				Type:     schema.TypeBool,
+			},
 			"cloud_init": {
-				Computed: true,
 				Optional: true,
 				Type:     schema.TypeString,
 			},
 			"cpus": {
-				Computed: true,
 				Optional: true,
 				Type:     schema.TypeInt,
 			},
 			"disk": {
-				Computed: true,
 				Optional: true,
 				Type:     schema.TypeString,
 			},
 			"image": {
-				Computed: true,
-				Optional: false,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 			"mem": {
-				Computed: true,
 				Optional: true,
 				Type:     schema.TypeString,
 			},
 			"name": {
-				Computed: true,
-				Optional: false,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 			"network": {
 				Type:     schema.TypeSet,
-				Computed: true,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Computed: true,
-							Optional: true,
+							Required: true,
 							Type:     schema.TypeString,
 						},
 						"mac": {
-							Computed: true,
 							Optional: true,
 							Type:     schema.TypeString,
 						},
 						"mode": {
-							Computed: true,
 							Optional: true,
 							Type:     schema.TypeString,
 						},
 						"required": {
-							Computed: true,
 							Optional: true,
 							Type:     schema.TypeBool,
 						},
@@ -88,13 +81,11 @@ func InstanceType() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"local_path": {
-							Computed: true,
-							Optional: true,
+							Required: true,
 							Type:     schema.TypeString,
 						},
 						"mount_path": {
-							Computed: true,
-							Optional: true,
+							Required: true,
 							Type:     schema.TypeString,
 						},
 					},
@@ -113,11 +104,15 @@ func (i Instance) Create(ctx context.Context, d *schema.ResourceData, m interfac
 	name := d.Get("name").(string)
 
 	launchFlags := make([]string, 0)
-	simpleFlags := []string{"cloud_init", "cpus", "disk", "mem"}
+	simpleFlags := []string{"bridged", "cloud_init", "cpus", "disk", "mem"}
 	for _, f := range simpleFlags {
 		v, ok := d.GetOk(f)
 		if ok {
-			launchFlags = append(launchFlags, "--"+f, fmt.Sprintf("%v", v))
+			if f == "bridged" {
+				launchFlags = append(launchFlags, "--"+f)
+			} else {
+				launchFlags = append(launchFlags, "--"+f, fmt.Sprintf("%v", v))
+			}
 		}
 	}
 

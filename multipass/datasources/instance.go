@@ -10,17 +10,23 @@ func InstanceType() *schema.Resource {
 		ReadContext: provider.LoadInstance,
 		Schema: map[string]*schema.Schema{
 			"instances": {
+				Computed: true,
+				Optional: true,
+				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"disks": {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeSet,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"Total": {
+									"total": {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeString,
 									},
-									"Used": {
+									"used": {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeString,
@@ -42,21 +48,30 @@ func InstanceType() *schema.Resource {
 							Computed: true,
 							Optional: true,
 							Type:     schema.TypeList,
+							Elem:     schema.TypeString,
 						},
 						"load": {
-							Computed: false,
+							Computed: true,
 							Optional: true,
 							Type:     schema.TypeFloat,
 						},
+						"name": {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeString,
+						},
 						"memory": {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeSet,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"Total": {
+									"total": {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeInt,
 									},
-									"Used": {
+									"used": {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeInt,
@@ -65,12 +80,16 @@ func InstanceType() *schema.Resource {
 							},
 						},
 						"mounts": {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeSet,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"gid_mappings": {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeList,
+										Elem:     schema.TypeString,
 									},
 									"source_path": {
 										Computed: true,
@@ -86,6 +105,7 @@ func InstanceType() *schema.Resource {
 										Computed: true,
 										Optional: true,
 										Type:     schema.TypeList,
+										Elem:     schema.TypeString,
 									},
 								},
 							},

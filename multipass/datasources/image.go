@@ -9,10 +9,6 @@ func ImageType() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: provider.LoadImage,
 		Schema: map[string]*schema.Schema{
-			"aliases": {
-				Computed: true,
-				Type:     schema.TypeList,
-			},
 			"fuzzy": {
 				Computed: false,
 				Optional: true,

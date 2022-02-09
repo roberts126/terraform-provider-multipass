@@ -21,18 +21,15 @@ func AliasType() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"alias": {
-				Computed: true,
-				Optional: true,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 			"command": {
-				Computed: true,
-				Optional: true,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 			"instance": {
-				Computed: true,
-				Optional: true,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 		},

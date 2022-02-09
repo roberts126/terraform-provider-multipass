@@ -98,10 +98,6 @@ func LoadImage(_ context.Context, d *schema.ResourceData, m interface{}) diag.Di
 		return AddError(diags, "error loading image", err)
 	}
 
-	if err = d.Set("aliases", image.Aliases); err != nil {
-		return diag.FromErr(err)
-	}
-
 	if err = d.Set("name", image.Name); err != nil {
 		return diag.FromErr(err)
 	}

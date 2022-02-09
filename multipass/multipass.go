@@ -14,7 +14,13 @@ import (
 
 func New() *schema.Provider {
 	return &schema.Provider{
-		Schema: map[string]*schema.Schema{},
+		Schema: map[string]*schema.Schema{
+			"command": {
+				Computed: true,
+				Optional: true,
+				Type:     schema.TypeString,
+			},
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"multipass_alias":    resources.AliasType(),
 			"multipass_config":   resources.ConfigType(),

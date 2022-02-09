@@ -21,13 +21,11 @@ func ConfigType() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"flag": {
-				Computed: false,
-				Optional: false,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 			"value": {
-				Computed: false,
-				Optional: false,
+				Required: true,
 				Type:     schema.TypeString,
 			},
 		},
