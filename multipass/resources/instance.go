@@ -21,73 +21,189 @@ func InstanceType() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: i.ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"bridged": {
-				Optional: true,
-				Type:     schema.TypeBool,
-			},
-			"cloud_init": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"cpus": {
-				Optional: true,
-				Type:     schema.TypeInt,
-			},
-			"disk": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"image": {
-				Required: true,
-				Type:     schema.TypeString,
-			},
-			"mem": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"name": {
-				Required: true,
-				Type:     schema.TypeString,
-			},
-			"network": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Required: true,
-							Type:     schema.TypeString,
-						},
-						"mac": {
-							Optional: true,
-							Type:     schema.TypeString,
-						},
-						"mode": {
-							Optional: true,
-							Type:     schema.TypeString,
-						},
-						"required": {
-							Optional: true,
-							Type:     schema.TypeBool,
-						},
+		Schema: creationSchema(),
+	}
+}
+
+func creationSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"disks": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeSet,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"device": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"total": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"used": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeString,
 					},
 				},
 			},
-			"mounts": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"local_path": {
-							Required: true,
-							Type:     schema.TypeString,
-						},
-						"mount_path": {
-							Required: true,
-							Type:     schema.TypeString,
-						},
+		},
+		"image_hash": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"image_release": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"ipv4": {
+			Computed: true,
+			Optional: true,
+			Default:  nil,
+			Type:     schema.TypeSet,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"load": {
+			Computed: true,
+			Optional: true,
+			Default:  nil,
+			Type:     schema.TypeList,
+			Elem: &schema.Schema{
+				Type: schema.TypeFloat,
+			},
+		},
+		"memory": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeSet,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"total": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeInt,
+					},
+					"used": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeInt,
+					},
+				},
+			},
+		},
+		"mounts": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeSet,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"gid_mappings": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeList,
+						Elem:     schema.TypeString,
+					},
+					"source_path": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"mount_path": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"uid_mappings": {
+						Computed: true,
+						Optional: true,
+						Type:     schema.TypeList,
+						Elem:     schema.TypeString,
+					},
+				},
+			},
+		},
+		"release": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"state": {
+			Computed: true,
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"bridged": {
+			Optional: true,
+			Type:     schema.TypeBool,
+		},
+		"cloud_init": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"cpus": {
+			Optional: true,
+			Type:     schema.TypeInt,
+		},
+		"disk": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"image": {
+			Required: true,
+			Type:     schema.TypeString,
+		},
+		"mem": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"name": {
+			Required: true,
+			Type:     schema.TypeString,
+		},
+		"network": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Required: true,
+						Type:     schema.TypeString,
+					},
+					"mac": {
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"mode": {
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"required": {
+						Optional: true,
+						Type:     schema.TypeBool,
+					},
+				},
+			},
+		},
+		"mount": {
+			Type:     schema.TypeSet,
+			Computed: true,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"local_path": {
+						Required: true,
+						Type:     schema.TypeString,
+					},
+					"mount_path": {
+						Required: true,
+						Type:     schema.TypeString,
 					},
 				},
 			},
@@ -138,11 +254,11 @@ func (i Instance) Create(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 	}
 
-	return provider.LoadInstance(ctx, d, m)
+	return provider.LoadSingleInstance(ctx, d, m)
 }
 
 func (i Instance) Read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return provider.LoadInstance(ctx, d, m)
+	return provider.LoadSingleInstance(ctx, d, m)
 }
 
 func (i Instance) Update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

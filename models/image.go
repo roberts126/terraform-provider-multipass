@@ -30,26 +30,24 @@ func NewImageDetailsFromOutput(b []byte) (*ImageDetails, error) {
 }
 
 func (d *ImageDetails) FindImage(name string, fuzzy bool) (*Image, error) {
-	matches := make([]*Image, 0)
-	for n, img := range d.Images {
-		if n == name || (fuzzy && strings.Contains(n, name)) || img.HasAlias(name, fuzzy) {
-			if len(matches) > 0 {
-				return nil, fmt.Errorf("more than one result returned for image: %s", name)
-			}
-
-			matches = append(matches, &img)
-		}
-	}
-
 	var err error
 	var match *Image
 
-	if len(matches) < 0 {
+	for n, img := range d.Images {
+		if n == name || (fuzzy && strings.Contains(n, name)) || img.HasAlias(name, fuzzy) {
+			if match == nil {
+				t := img // img address keeps getting overwritten
+				match = &t
+				match.Name = n
+			} else {
+				return nil, fmt.Errorf("more than one result returned for image: %s", name)
+			}
+		}
+	}
+
+	if match == nil {
 		err = fmt.Errorf("could not locate image: %s", name)
 		match = nil
-	} else {
-		err = nil
-		match = matches[0]
 	}
 
 	return match, err

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -139,16 +140,13 @@ func LoadInstance(_ context.Context, d *schema.ResourceData, m interface{}) diag
 		return AddError(diags, "error parsing instance", err)
 	}
 
-	i := 0
-	list := make([]models.Instance, len(instances.List))
-	for n, instance := range instances.List {
-		list[i] = instance
-		list[i].Name = n
-
-		i++
+	var data = struct {
+		Instances []*models.Instance
+	}{
+		Instances: instances.List,
 	}
 
-	if err = d.Set("instances", list); err != nil {
+	if err = d.Set("instances", data); err != nil {
 		return AddError(diags, "error setting instance list", err)
 	}
 
@@ -157,6 +155,39 @@ func LoadInstance(_ context.Context, d *schema.ResourceData, m interface{}) diag
 	} else {
 		d.SetId(name)
 	}
+
+	return diags
+}
+
+func LoadSingleInstance(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	p := m.(*Provider)
+	name := d.Get("name").(string)
+
+	b, err := p.Info(name)
+	if err != nil {
+		return AddError(diags, "error getting instance", err)
+	}
+
+	instances, err := models.NewInstanceDetailsFromOutput(b)
+	if err != nil {
+		return AddError(diags, "error parsing instance", err)
+	}
+
+	if len(instances.List) != 1 {
+		return AddError(diags, "incorrect number of instance returned", errors.New("invalid number of instances"))
+	}
+
+	instance := instances.List[0].AsMap()
+	for k, v := range instance {
+		if err = d.Set(k, v); err != nil {
+			fmt.Printf("Error setting field %s to %v\n", k, v)
+			return AddError(diags, "error setting instance list", err)
+		}
+	}
+
+	d.SetId(name)
 
 	return diags
 }
