@@ -110,7 +110,7 @@ func creationSchema() map[string]*schema.Schema {
 						Type:     schema.TypeList,
 						Elem:     schema.TypeString,
 					},
-					"source_path": {
+					"local_path": {
 						Computed: true,
 						Optional: true,
 						Type:     schema.TypeString,
@@ -191,70 +191,38 @@ func creationSchema() map[string]*schema.Schema {
 				},
 			},
 		},
-		"mount": {
-			Type:     schema.TypeSet,
-			Computed: true,
-			Optional: true,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"local_path": {
-						Required: true,
-						Type:     schema.TypeString,
-					},
-					"mount_path": {
-						Required: true,
-						Type:     schema.TypeString,
-					},
-				},
-			},
-		},
 	}
 }
 
-type Instance struct{}
+type Instance struct {
+	name  string
+	image string
+}
 
 func (i Instance) Create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	p := m.(*provider.Provider)
+	i.image = d.Get("image").(string)
+	i.name = d.Get("name").(string)
 
-	image := d.Get("image").(string)
-	name := d.Get("name").(string)
-
-	launchFlags := make([]string, 0)
-	simpleFlags := []string{"bridged", "cloud_init", "cpus", "disk", "mem"}
-	for _, f := range simpleFlags {
-		v, ok := d.GetOk(f)
-		if ok {
-			if f == "bridged" {
-				launchFlags = append(launchFlags, "--"+f)
-			} else {
-				launchFlags = append(launchFlags, "--"+f, fmt.Sprintf("%v", v))
-			}
-		}
-	}
-
-	launchFlags = append(launchFlags, i.buildNetwork(d)...)
-
-	_, err := p.Launch(image, name, launchFlags...)
+	_, err := p.Launch(i.image, i.name, i.buildFlags(d)...)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	for _, mount := range i.buildMounts(d) {
-		lPath, lOk := mount["local_path"]
-		mPath, mOk := mount["local_path"]
-
-		if lOk && mOk {
-			if _, err = p.Mount(name, lPath, mPath); err != nil {
-				if _, err = p.Delete(name); err != nil {
-					return diag.FromErr(err)
-				}
-
-				return diag.FromErr(err)
-			}
+	if err = i.attachMounts(p, d); err != nil {
+		if _, err = p.Delete(i.name); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
-	return provider.LoadSingleInstance(ctx, d, m)
+	diags := provider.LoadSingleInstance(ctx, d, m)
+	if diags.HasError() {
+		if _, err = p.Delete(i.name); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return diags
 }
 
 func (i Instance) Read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -283,7 +251,44 @@ func (i Instance) ImportState(ctx context.Context, d *schema.ResourceData, m int
 	return nil, nil
 }
 
-func (i Instance) buildMounts(d *schema.ResourceData) []map[string]string {
+func (i *Instance) attachMounts(p *provider.Provider, d *schema.ResourceData) error {
+	var err error
+
+	for _, mount := range i.buildMounts(d) {
+		lPath, lOk := mount["local_path"]
+		mPath, mOk := mount["mount_path"]
+
+		if lOk && mOk {
+			if _, err = p.Mount(i.name, lPath, mPath); err != nil {
+				if _, err = p.Delete(i.name); err != nil {
+					return err
+				}
+
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (i *Instance) buildFlags(d *schema.ResourceData) []string {
+	flags := make([]string, 0)
+	if _, bridgedOk := d.GetOk("bridged"); bridgedOk {
+		flags = append(flags, "--bridged")
+	}
+
+	simpleFlags := []string{"cloud_init", "cpus", "disk", "mem"}
+	for _, f := range simpleFlags {
+		if v, ok := d.GetOk(f); ok {
+			flags = append(flags, "--"+f, fmt.Sprintf("%v", v))
+		}
+	}
+
+	return append(flags, i.buildNetworks(d)...)
+}
+
+func (i *Instance) buildMounts(d *schema.ResourceData) []map[string]string {
 	mounts := make([]map[string]string, 0)
 
 	if v, ok := d.GetOk("mounts"); ok {
@@ -302,7 +307,7 @@ func (i Instance) buildMounts(d *schema.ResourceData) []map[string]string {
 	return mounts
 }
 
-func (i Instance) buildNetwork(d *schema.ResourceData) []string {
+func (i *Instance) buildNetworks(d *schema.ResourceData) []string {
 	flags := make([]string, 0)
 
 	v, ok := d.GetOk("network")
@@ -310,27 +315,34 @@ func (i Instance) buildNetwork(d *schema.ResourceData) []string {
 		return flags
 	}
 
-	vl := v.(*schema.Set).List()
-	if len(vl) < 1 {
+	list := v.(*schema.Set).List()
+	if len(list) < 1 {
 		return flags
 	}
 
-	iNetwork := vl[0].(map[string]interface{})
+	for _, iNet := range list {
+		var net map[string]interface{}
+		if net, ok = iNet.(map[string]interface{}); ok {
+			var name, mac, mode interface{}
+			netFlags := make([]string, 0)
 
-	name, ok := iNetwork["name"]
-	if ok {
-		flags = append(flags, fmt.Sprintf("name=%v", name))
+			if name, ok = net["name"]; ok {
+				netFlags = append(netFlags, fmt.Sprintf("name=%v", name))
+			}
+
+			if mac, ok = net["mac"]; ok {
+				netFlags = append(netFlags, fmt.Sprintf("mac=%v", mac))
+			}
+
+			if mode, ok = net["mode"]; ok {
+				netFlags = append(netFlags, fmt.Sprintf("mode=%v", mode))
+			}
+
+			if len(netFlags) > 0 {
+				flags = append(flags, []string{"--network", strings.Join(netFlags, ",")}...)
+			}
+		}
 	}
 
-	mac, ok := iNetwork["mac"]
-	if ok {
-		flags = append(flags, fmt.Sprintf("mac=%v", mac))
-	}
-
-	mode, ok := iNetwork["mode"]
-	if ok {
-		flags = append(flags, fmt.Sprintf("mode=%v", mode))
-	}
-
-	return append([]string{"--network"}, strings.Join(flags, ","))
+	return flags
 }

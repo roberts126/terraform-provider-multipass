@@ -6,21 +6,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"terraform-multipass-provider/cli"
-	"terraform-multipass-provider/multipass/provider"
-
 	"terraform-multipass-provider/multipass/datasources"
+	"terraform-multipass-provider/multipass/provider"
 	"terraform-multipass-provider/multipass/resources"
 )
 
 func New() *schema.Provider {
 	return &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"command": {
-				Computed: true,
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-		},
+		Schema: provider.GetSchema(),
 		ResourcesMap: map[string]*schema.Resource{
 			"multipass_alias":    resources.AliasType(),
 			"multipass_config":   resources.ConfigType(),
@@ -48,6 +41,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	}
 
 	p := provider.NewProvider(cli.NewClient(runner))
+	p.ConfigureMultipass(d)
 
 	return p, nil
 }

@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type InstanceDetails struct {
 	Errors []string            `json:"errors" tfsdk:"errors"`
@@ -69,12 +71,19 @@ func (i *Instance) AsMap() map[string]interface{} {
 		mounts = append(mounts, mount.AsMap(path))
 	}
 
-	// todo: fix interface -> schema.Set for "memory":        i.Memory,
+	memory := []map[string]interface{}{
+		{
+			"total": i.Memory.Total,
+			"used":  i.Memory.Used,
+		},
+	}
+
 	return map[string]interface{}{
 		"name":          i.Name,
 		"disks":         disks,
 		"image_hash":    i.ImageHash,
 		"image_release": i.ImageRelease,
+		"memory":        memory,
 		"ipv4":          i.Ipv4,
 		"mounts":        mounts,
 		"release":       i.Release,

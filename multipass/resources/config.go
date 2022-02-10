@@ -19,16 +19,7 @@ func ConfigType() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: c.ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"flag": {
-				Required: true,
-				Type:     schema.TypeString,
-			},
-			"value": {
-				Required: true,
-				Type:     schema.TypeString,
-			},
-		},
+		Schema: provider.GetSchema(),
 	}
 }
 
@@ -37,10 +28,7 @@ type Config struct {
 
 func (c Config) Create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	p := m.(*provider.Provider)
-
-	if err := c.setFlag(p, d); err != nil {
-		return diag.FromErr(err)
-	}
+	p.ConfigureMultipass(d)
 
 	return provider.LoadConfig(ctx, d, m)
 }
@@ -50,13 +38,7 @@ func (c Config) Read(ctx context.Context, d *schema.ResourceData, m interface{})
 }
 
 func (c Config) Update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	p := m.(*provider.Provider)
-
-	if err := c.setFlag(p, d); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return provider.LoadConfig(ctx, d, m)
+	return c.Create(ctx, d, m)
 }
 
 func (c Config) Delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -65,17 +47,4 @@ func (c Config) Delete(ctx context.Context, d *schema.ResourceData, m interface{
 
 func (c Config) ImportState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	return nil, nil
-}
-
-func (c Config) setFlag(p *provider.Provider, d *schema.ResourceData) error {
-	flag := d.Get("flag").(string)
-	val := d.Get("value").(string)
-
-	if _, err := p.Set(flag, val); err != nil {
-		return err
-	}
-
-	d.SetId(flag)
-
-	return nil
 }

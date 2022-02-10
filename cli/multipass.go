@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"os/exec"
+
+	"terraform-multipass-provider/build"
 )
 
 type MultipassRunner struct {
@@ -10,7 +12,7 @@ type MultipassRunner struct {
 }
 
 func NewMultipassDefaultRunner() (*MultipassRunner, error) {
-	c, err := exec.LookPath(mpName)
+	c, err := exec.LookPath(build.MultipassExecutable)
 	if err != nil {
 		return nil, err
 	}

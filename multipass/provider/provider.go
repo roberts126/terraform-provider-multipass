@@ -1,9 +1,23 @@
 package provider
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"terraform-multipass-provider/build"
 	"terraform-multipass-provider/cli"
+	"terraform-multipass-provider/multipass/validate"
+)
+
+const (
+	KeyWindowsTerminalProfiles = "client_apps_windows_terminal_profiles"
+	KeyGuiAutostart            = "client_gui_autostart"
+	KeyGuiHotkey               = "client_gui_hotkey"
+	KeyPrimaryName             = "client_primary_name"
+	KeyBridgedNetwork          = "local_bridged_network"
+	KeyDriver                  = "local_driver"
+	KeyPrivilegedMounts        = "local_privileged_mounts"
 )
 
 type Provider struct {
@@ -40,6 +54,67 @@ func AddError(diags diag.Diagnostics, msg string, err error) diag.Diagnostics {
 		Summary:  msg,
 		Detail:   err.Error(),
 	})
+}
+
+func GetSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		KeyWindowsTerminalProfiles: {
+			Optional:         true,
+			Type:             schema.TypeString,
+			ValidateDiagFunc: validate.WindowsTerminalProfile,
+		},
+		KeyGuiAutostart: {
+			Optional: true,
+			Type:     schema.TypeBool,
+		},
+		KeyGuiHotkey: {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		KeyPrimaryName: {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		KeyBridgedNetwork: {
+			Optional:         true,
+			Type:             schema.TypeString,
+			ValidateDiagFunc: validate.BridgedNetwork,
+		},
+		KeyDriver: {
+			Optional:         true,
+			Type:             schema.TypeString,
+			ValidateDiagFunc: validate.Driver,
+		},
+		KeyPrivilegedMounts: {
+			Optional: true,
+			Type:     schema.TypeBool,
+		},
+	}
+}
+
+func GetSchemaKeys() []string {
+	list := []string{
+		KeyGuiAutostart,
+		KeyGuiHotkey,
+		KeyPrimaryName,
+		KeyBridgedNetwork,
+		KeyDriver,
+		KeyPrivilegedMounts,
+	}
+
+	if build.SetWindowsTerminal {
+		list = append(list, KeyWindowsTerminalProfiles)
+	}
+
+	return list
+}
+
+func (p *Provider) ConfigureMultipass(d *schema.ResourceData) {
+	for _, k := range GetSchemaKeys() {
+		if v, ok := d.GetOk(k); ok {
+			p.Set(k, fmt.Sprintf("%v", v))
+		}
+	}
 }
 
 func (p *Provider) Alias(instance, command, alias string) ([]byte, error) {
