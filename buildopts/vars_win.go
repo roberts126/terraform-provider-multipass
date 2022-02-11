@@ -1,6 +1,6 @@
 //go:build windows
 
-package build
+package buildopts
 
 const (
 	MultipassExecutable = "multipass.exe"

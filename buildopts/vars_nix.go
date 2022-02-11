@@ -1,6 +1,6 @@
 //go:build linux || freebsd
 
-package build
+package buildopts
 
 const (
 	MultipassExecutable = "multipass"

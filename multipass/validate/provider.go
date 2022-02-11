@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"terraform-multipass-provider/build"
+	"terraform-multipass-provider/buildopts"
 	"terraform-multipass-provider/cli"
 	"terraform-multipass-provider/models"
 )
@@ -83,7 +83,7 @@ func Driver(i interface{}, path cty.Path) diag.Diagnostics {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
 			Summary:       "Bad Local Driver",
-			Detail:        fmt.Sprintf("local driver must be set to one of %s, but was set too %v", strings.Join(build.AllowedDrivers, ", "), i),
+			Detail:        fmt.Sprintf("local driver must be set to one of %s, but was set too %v", strings.Join(buildopts.AllowedDrivers, ", "), i),
 			AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("local_driver")}),
 		})
 	}
@@ -92,7 +92,7 @@ func Driver(i interface{}, path cty.Path) diag.Diagnostics {
 }
 
 func driverAllowed(driver string) bool {
-	for _, allowed := range build.AllowedDrivers {
+	for _, allowed := range buildopts.AllowedDrivers {
 		if driver == allowed {
 			return true
 		}

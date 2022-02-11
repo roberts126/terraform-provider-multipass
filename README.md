@@ -6,6 +6,7 @@ utility.
 ## To Do
 1. Add a lot more tests including [Acceptance Tests](https://www.terraform.io/plugin/sdkv2/testing/acceptance-tests/testcase)
 2. Imports
+3. Improve documentation
 
 ## Limitations
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"terraform-multipass-provider/build"
+	"terraform-multipass-provider/buildopts"
 	"terraform-multipass-provider/cli"
 	"terraform-multipass-provider/multipass/validate"
 )
@@ -102,7 +102,7 @@ func GetSchemaKeys() map[string]string {
 		KeyPrivilegedMounts: "local.driver",
 	}
 
-	if build.SetWindowsTerminal {
+	if buildopts.SetWindowsTerminal {
 		keys[KeyWindowsTerminalProfiles] = ""
 	}
 

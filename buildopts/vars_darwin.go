@@ -1,6 +1,6 @@
 //go:build darwin
 
-package build
+package buildopts
 
 const (
 	MultipassExecutable = "multipass"

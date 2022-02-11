@@ -4,7 +4,7 @@
 vendor
 
 local
-terraform-provider-hashicups
+terraform-provider-multipass
 bin
 
 # Local .terraform directories
