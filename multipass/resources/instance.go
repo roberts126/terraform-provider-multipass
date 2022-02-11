@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"terraform-multipass-provider/multipass/provider"
+	mpschema "terraform-multipass-provider/multipass/schema"
 )
 
 func InstanceType() *schema.Resource {
@@ -19,7 +20,7 @@ func InstanceType() *schema.Resource {
 		ReadContext:   i.Read,
 		UpdateContext: i.Update,
 		Importer: &schema.ResourceImporter{
-			StateContext: i.ImportState,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: creationSchema(),
 	}
@@ -31,25 +32,7 @@ func creationSchema() map[string]*schema.Schema {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"device": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"total": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"used": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceDiskSchema,
 		},
 		"image_hash": {
 			Computed: true,
@@ -83,51 +66,13 @@ func creationSchema() map[string]*schema.Schema {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"total": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeInt,
-					},
-					"used": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeInt,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceMemorySchema,
 		},
 		"mounts": {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"gid_mappings": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeList,
-						Elem:     schema.TypeString,
-					},
-					"local_path": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"mount_path": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"uid_mappings": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeList,
-						Elem:     schema.TypeString,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceMountSchema,
 		},
 		"release": {
 			Computed: true,
@@ -156,7 +101,8 @@ func creationSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 		},
 		"image": {
-			Required: true,
+			Optional: true,
+			Default:  "20.04",
 			Type:     schema.TypeString,
 		},
 		"mem": {
@@ -170,26 +116,7 @@ func creationSchema() map[string]*schema.Schema {
 		"network": {
 			Type:     schema.TypeSet,
 			Optional: true,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"name": {
-						Required: true,
-						Type:     schema.TypeString,
-					},
-					"mac": {
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"mode": {
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"required": {
-						Optional: true,
-						Type:     schema.TypeBool,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceNetworkSchema,
 		},
 	}
 }
@@ -230,8 +157,13 @@ func (i Instance) Read(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func (i Instance) Update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Can't update
-	return nil
+	// Can't update https://github.com/canonical/multipass/issues/1158
+	var diags diag.Diagnostics
+	return append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Update Is Unavailable",
+		Detail:   "Currently resizing an instance requires modification of the multipassd service.\nSee: https://github.com/canonical/multipass/issues/1158",
+	})
 }
 
 func (i Instance) Delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -255,11 +187,11 @@ func (i *Instance) attachMounts(p *provider.Provider, d *schema.ResourceData) er
 	var err error
 
 	for _, mount := range i.buildMounts(d) {
-		lPath, lOk := mount["local_path"]
-		mPath, mOk := mount["mount_path"]
+		srcPath, srcOK := mount["source_path"]
+		mntPath, mntOk := mount["mount_path"]
 
-		if lOk && mOk {
-			if _, err = p.Mount(i.name, lPath, mPath); err != nil {
+		if srcOK && mntOk {
+			if _, err = p.Mount(i.name, srcPath, mntPath); err != nil {
 				if _, err = p.Delete(i.name); err != nil {
 					return err
 				}

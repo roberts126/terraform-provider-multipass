@@ -17,7 +17,7 @@ func ConfigType() *schema.Resource {
 		ReadContext:   c.Read,
 		UpdateContext: c.Update,
 		Importer: &schema.ResourceImporter{
-			StateContext: c.ImportState,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: provider.GetSchema(),
 	}

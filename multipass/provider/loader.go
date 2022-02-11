@@ -12,10 +12,16 @@ import (
 
 func LoadAlias(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+	var aliasName string
 
 	p := m.(*Provider)
-	aliasName := d.Get("search").(string)
 	fuzzy := GetFuzzy(d, false)
+
+	if v, ok := d.GetOk("search"); ok {
+		aliasName = v.(string)
+	} else {
+		aliasName = d.Get("alias").(string)
+	}
 
 	b, err := p.Aliases()
 	if err != nil {
@@ -199,7 +205,7 @@ func LoadNetwork(_ context.Context, d *schema.ResourceData, m interface{}) diag.
 	search := d.Get("search").(string)
 	fuzzy := GetFuzzy(d, false)
 
-	b, err := p.Find()
+	b, err := p.Networks()
 	if err != nil {
 		return AddError(diags, "error getting networks", err)
 	}

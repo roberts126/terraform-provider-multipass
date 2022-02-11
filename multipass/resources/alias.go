@@ -17,7 +17,7 @@ func AliasType() *schema.Resource {
 		ReadContext:   a.Read,
 		UpdateContext: a.Update,
 		Importer: &schema.ResourceImporter{
-			StateContext: a.ImportState,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"alias": {

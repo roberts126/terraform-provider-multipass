@@ -3,6 +3,7 @@ package datasources
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"terraform-multipass-provider/multipass/provider"
+	mpschema "terraform-multipass-provider/multipass/schema"
 )
 
 func InstanceType() *schema.Resource {
@@ -26,25 +27,7 @@ func InstanceData() map[string]*schema.Schema {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"device": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"total": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"used": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceDiskSchema,
 		},
 		"image_hash": {
 			Computed: true,
@@ -76,51 +59,13 @@ func InstanceData() map[string]*schema.Schema {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"total": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeInt,
-					},
-					"used": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeInt,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceMemorySchema,
 		},
 		"mounts": {
 			Computed: true,
 			Optional: true,
 			Type:     schema.TypeSet,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"gid_mappings": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeList,
-						Elem:     schema.TypeString,
-					},
-					"source_path": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"mount_path": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeString,
-					},
-					"uid_mappings": {
-						Computed: true,
-						Optional: true,
-						Type:     schema.TypeList,
-						Elem:     schema.TypeString,
-					},
-				},
-			},
+			Elem:     mpschema.InstanceMountSchema,
 		},
 		"release": {
 			Computed: true,

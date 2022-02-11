@@ -92,29 +92,41 @@ func GetSchema() map[string]*schema.Schema {
 	}
 }
 
-func GetSchemaKeys() []string {
-	list := []string{
-		KeyGuiAutostart,
-		KeyGuiHotkey,
-		KeyPrimaryName,
-		KeyBridgedNetwork,
-		KeyDriver,
-		KeyPrivilegedMounts,
+func GetSchemaKeys() map[string]string {
+	keys := map[string]string{
+		KeyGuiAutostart:     "client.apps.windows-terminal.profiles",
+		KeyGuiHotkey:        "client.gui.autostart",
+		KeyPrimaryName:      "client.gui.hotkey",
+		KeyBridgedNetwork:   "client.primary-name",
+		KeyDriver:           "local.bridged-network",
+		KeyPrivilegedMounts: "local.driver",
 	}
 
 	if build.SetWindowsTerminal {
-		list = append(list, KeyWindowsTerminalProfiles)
+		keys[KeyWindowsTerminalProfiles] = ""
 	}
 
-	return list
+	return keys
 }
 
-func (p *Provider) ConfigureMultipass(d *schema.ResourceData) {
-	for _, k := range GetSchemaKeys() {
-		if v, ok := d.GetOk(k); ok {
-			p.Set(k, fmt.Sprintf("%v", v))
+func (p *Provider) ConfigureMultipass(d *schema.ResourceData) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	for key, flag := range GetSchemaKeys() {
+		if v, ok := d.GetOk(key); ok {
+			if b, err := p.Set(flag, fmt.Sprintf("%v", v)); err != nil {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Error Setting Config",
+					Detail:   err.Error() + "\n" + string(b),
+				})
+
+				return diags
+			}
 		}
 	}
+
+	return diags
 }
 
 func (p *Provider) Alias(instance, command, alias string) ([]byte, error) {

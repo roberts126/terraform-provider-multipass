@@ -85,7 +85,7 @@ func (c *Client) Networks() ([]byte, error) {
 
 // Set executes the multipass set command
 func (c *Client) Set(flag, value string) ([]byte, error) {
-	return c.runner.Run("set", flag, value)
+	return c.runner.Run("set", fmt.Sprintf("%s=%s", flag, value))
 }
 
 // Unalias executes the multipass unalias command

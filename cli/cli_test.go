@@ -133,7 +133,7 @@ func TestCli(t *testing.T) {
 	t.Run("TestSet", func(t *testing.T) {
 		runner.err = nil
 
-		expected := []byte("noop set flag value")
+		expected := []byte("noop set flag=value")
 		actual, err := client.Set("flag", "value")
 
 		if assert.NoErrorf(t, err, noErrFmt, "set") {
